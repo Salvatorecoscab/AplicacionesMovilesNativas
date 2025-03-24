@@ -8,12 +8,12 @@ Para ejecutar el proyecto se debe clonar la carpeta del proyecto, importarla a A
 ![Arquitectura del proyecto](images/arquiT3.png)
 
 ## Capturas de pantalla
-<!-- images/captura1.png -->
-![Captura de pantalla 1](images/captura1.png)
-<!-- images/captura2.png -->
-![Captura de pantalla 2](images/captura2.png)
-<!-- images/captura3.png -->
-![Captura de pantalla 3](images/captura3.png)
+<!-- images/captura1.jpeg -->
+![Captura de pantalla 1](images/captura1.jpeg)
+<!-- images/captura2.jpeg -->
+![Captura de pantalla 2](images/captura2.jpeg)
+<!-- images/captura3.jpeg -->
+![Captura de pantalla 3](images/captura3.jpeg)
 ## App funcionando
 <!-- images/app.gif -->
 ![App funcionando](images/app.gif) 
