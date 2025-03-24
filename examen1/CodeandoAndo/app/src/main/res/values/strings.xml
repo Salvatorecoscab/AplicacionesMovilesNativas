@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CodeandoAndo</string>
+    <string name="binary_system">Sistema binario</string>
+    <string name="message_deco">Decodifica el mensaje</string>
+    <string name="theme">Tema</string>
+    <string name="theme_guinda_selected">Tema Guinda seleccionado</string>
+    <string name="theme_azul_selected">Tema Azul seleccionado</string>
+    <string name="title_binary">Sistema Binario</string>
+    <string name="back">Volver</string>
+    <string name="check">Verificar</string>
+    <string name="generate">Generar</string>
+    <string name="correct">¡Correcto!</string>
+    <string name="incorrect">Incorrecto</string>
+    <string name="correct_toast">¡Respuesta Correcta!</string>
+    <string name="incorrect_toast">Intenta de nuevo.</string>
+    <string name="title_ascii">Código ASCII</string>
+    <string name="help">Ayuda</string>
+    <string name="enter_text">Ingresa el texto</string>
+    <string name="ascii_hint_title">Tabla de ASCII (Minúsculas)</string>
+    <string name="you_won">¡Ganaste!</string>"
+    <string name="you_lost">¡Perdiste!</string>
+    <string name="play_again">Jugar de nuevo</string>
+    <string name="exit">Salir</string>
+    <string name="result_icon_description">Icono de resultado</string>
+</resources>

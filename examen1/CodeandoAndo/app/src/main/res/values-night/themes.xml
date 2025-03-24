@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.CodeandoAndo" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>
+        <item name="colorOnPrimary">@color/colorOnPrimary</item>
+        <item name="colorSecondary">@color/colorSecondary</item>
+        <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item>
+        <item name="colorOnSecondary">@color/colorOnSecondary</item>
+        <item name="android:colorBackground">@color/colorBackground</item>
+        <item name="colorOnBackground">@color/colorOnBackground</item>
+        <item name="android:textColorPrimary">@color/textColorPrimary</item>
+        <item name="android:textColorSecondary">@color/textColorSecondary</item>
+        <item name="android:divider">@color/dividerColor</item>
+    </style>
+
+    <style name="Theme.CodeandoAndo.GuindaClaro" parent="Theme.CodeandoAndo">
+        <item name="colorPrimary">@color/guinda_medio</item>
+        <item name="colorPrimaryVariant">@color/guinda_oscuro</item>
+        <item name="android:colorBackground">@color/guinda_fondo_oscuro</item>
+        <item name="android:textColorPrimary">@color/guinda_texto_oscuro</item>
+    </style>
+
+    <style name="Theme.CodeandoAndo.AzulClaro" parent="Theme.CodeandoAndo">
+        <item name="colorPrimary">@color/azul_medio</item>
+        <item name="colorPrimaryVariant">@color/azul_oscuro</item>
+        <item name="android:colorBackground">@color/azul_fondo_oscuro</item>
+        <item name="android:textColorPrimary">@color/azul_texto_oscuro</item>
+    </style>
+
+</resources>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryVariant">#3700B3</color>
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorSecondary">#03DAC5</color>
+    <color name="colorSecondaryVariant">#018786</color>
+    <color name="colorOnSecondary">#000000</color>
+    <color name="colorBackground">#333333</color> <color name="colorOnBackground">#FFFFFF</color>
+    <color name="textColorPrimary">#FFFFFF</color> <color name="textColorSecondary">#CCCCCC</color>
+    <color name="dividerColor">#666666</color>
+
+    <color name="guinda_claro">#FFD70000</color>
+    <color name="guinda_medio">#B30000</color>
+    <color name="guinda_oscuro">#800000</color>
+    <color name="guinda_fondo_oscuro">#220000</color>
+    <color name="guinda_texto_oscuro">#FFFFFF</color>
+
+    <color name="azul_claro">#00BFFF</color>
+    <color name="azul_medio">#007FFF</color>
+    <color name="azul_oscuro">#00008B</color>
+    <color name="azul_fondo_oscuro">#00001A</color>
+    <color name="azul_texto_oscuro">#FFFFFF</color>
+
+    <color name="blanco">#FFFFFF</color>
+    <color name="gris_claro">#666666</color>
+    <color name="gris_medio">#999999</color>
+    <color name="gris_oscuro">#CCCCCC</color>
+    <color name="negro">#000000</color>
+</resources>
