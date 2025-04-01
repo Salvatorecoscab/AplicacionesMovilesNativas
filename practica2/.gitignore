@@ -1,0 +1,6 @@
+# ignore google services and generated directories
+CRUDFirebaseApp/app/google-services.json
+CRUDFirebaseApp/app/build/generated
+
+
+
