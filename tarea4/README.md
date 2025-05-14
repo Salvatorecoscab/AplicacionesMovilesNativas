@@ -1,4 +1,3 @@
-
 ## 🧪 Ejercicio 1: Implementación Básica de Localización con OpenStreetMap
 
 ### 📝 Descripción
@@ -68,6 +67,13 @@ Se creó una nueva `Activity` que carga la versión web de Google Maps utilizand
 * Dispositivo con Android 8.0 (API 26) o superior
 * Permisos de ubicación habilitados
 * Conexión a internet
+* Añadir tu api de GraphHopper en el archivo local.properties
+
+```properties
+API_KEY="tu_api_key"
+```
+
+
 
 ## 🧪 Pruebas Realizadas
 
@@ -84,7 +90,7 @@ Se creó una nueva `Activity` que carga la versión web de Google Maps utilizand
 * Se comprobó la viabilidad de usar OpenStreetMap y Leaflet.js como alternativa libre a Google Maps.
 * La implementación dual permite comparar experiencia de usuario y rendimiento.
 * Se exploró el uso de bases de datos, navegación basada en ubicación y optimización de rutas, fortaleciendo conocimientos en geolocalización, bases de datos y diseño UX.
-
+* Es importante añadir la API key de GraphHopper en el archivo `local.properties` para el correcto funcionamiento de la aplicación, ya que se realiza una llamada a la API de GraphHopper para obtener las rutas optimizadas entre dos puntos. La API key se puede obtener registrándose en el sitio web de GraphHopper y siguiendo las instrucciones para generar una clave de API.
 ---
 
 ## 📚 Bibliografía
@@ -100,24 +106,25 @@ Se creó una nueva `Activity` que carga la versión web de Google Maps utilizand
 
 Las imágenes se encuentran en la carpeta [`/multimedia/screenshots`]():
 
-
 * Mapa centrado en la ubicación actual (OpenStreetMap)
-![Captura de pantalla del mapa centrado en la ubicación actual](multimedia/screenshots/screenshot1.jpg)
+  ![Captura de pantalla del mapa centrado en la ubicación actual](multimedia/screenshots/screenshot1.jpg)
 * Mapa centrado en la ubicación actual (Google Maps)
-![Captura de pantalla del mapa centrado en la ubicación actual](multimedia/screenshots/screenshot3.jpg)
+  ![Captura de pantalla del mapa centrado en la ubicación actual](multimedia/screenshots/screenshot3.jpg)
 * Metricas comparativas entre OpenStreetMap y Google Maps
-![Captura de pantalla de las métricas comparativas entre OpenStreetMap y Google Maps](multimedia/screenshots/screenshot2.jpg)
+  ![Captura de pantalla de las métricas comparativas entre OpenStreetMap y Google Maps](multimedia/screenshots/screenshot2.jpg)
 * Anadir marcador de ubicación
-![Captura de pantalla de la opción para añadir un marcador de ubicación](multimedia/screenshots/screenshot4.jpg)
+  ![Captura de pantalla de la opción para añadir un marcador de ubicación](multimedia/screenshots/screenshot4.jpg)
 * Mostrar lista de marcadores
-![Captura de pantalla de la lista de marcadores](multimedia/screenshots/screenshot5.jpg)
+  ![Captura de pantalla de la lista de marcadores](multimedia/screenshots/screenshot5.jpg)
 * Mostrar zonas por descubrir
-![Captura de pantalla de las zonas por descubrir](multimedia/screenshots/screenshot6.jpg)
+  ![Captura de pantalla de las zonas por descubrir](multimedia/screenshots/screenshot6.jpg)
 * Mostrar menu para generar rutas
-![Captura de pantalla del menú para generar rutas](multimedia/screenshots/screenshot7.jpg)
+  ![Captura de pantalla del menú para generar rutas](multimedia/screenshots/screenshot7.jpg)
 * Mostrar ruta generada y zona por descubrir
-![Captura de pantalla de la ruta generada y zona por descubrir](multimedia/screenshots/screenshot8.jpg)
+  ![Captura de pantalla de la ruta generada y zona por descubrir](multimedia/screenshots/screenshot8.jpg)
+
 ### 🎥 Video demostrativo
 
 Puedes ver una demostración de la aplicación en funcionamiento en el siguiente video ubicado en [`/multimedia/demo.mp4`]().
+
 * [Video demostrativo de la aplicación](multimedia/demo.mp4)
