@@ -42,7 +42,6 @@
         android:layout_margin="16dp"
         android:contentDescription="Añadir POI"
         app:srcCompat="@android:drawable/ic_input_add" />
-    <!-- Añadir estos botones flotantes al layout existente -->
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/showPoiButton"
@@ -63,27 +62,17 @@
         android:layout_margin="16dp"
         android:contentDescription="Zonas de exploración"
         app:srcCompat="@android:drawable/ic_dialog_map" />
+
+    <!-- Nuevo botón para generar rutas -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/trafficSimulationButton"
+        android:id="@+id/routeButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_toStartOf="@id/exploreZonesButton"
         android:layout_margin="16dp"
-        android:src="@drawable/ic_traffic"
-        app:layout_constraintBottom_toTopOf="@+id/addPoiButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:contentDescription="Simulación de tráfico" />
+        android:contentDescription="Generar Ruta"
+        app:srcCompat="@android:drawable/ic_menu_directions" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/dayNightButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_night_mode"
-        android:layout_alignParentBottom="true"
-        android:layout_toStartOf="@id/trafficSimulationButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:contentDescription="Cambiar modo día/noche" />
 
 </RelativeLayout>

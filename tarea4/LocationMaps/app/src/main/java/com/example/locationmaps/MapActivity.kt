@@ -43,18 +43,24 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.locationmaps.adapters.PointOfInterestAdapter
+// Eliminar la siguiente importación para evitar conflicto con la data class local LatLng
+// import com.google.android.gms.maps.model.LatLng
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
-import com.example.locationmaps.traffic.*
 import java.util.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.URL
+// import java.net.URLEncoder // No se está usando URLEncoder directamente aquí
 
-class MapActivity : AppCompatActivity(), TrafficCallback {
-    // Movido htmlContent dentro de la clase como companion object
+class MapActivity : AppCompatActivity() {
 
     companion object {
         private const val REQUEST_CAMERA_PERMISSION = 100
-        private const val ZONES_ACTIVITY_REQUEST_CODE = 101
+        private const val ZONES_ACTIVITY_REQUEST_CODE = 101 // No usado directamente, pero mantenido
 
         private val htmlContent = """
             <html>
@@ -69,127 +75,53 @@ class MapActivity : AppCompatActivity(), TrafficCallback {
                         margin: 0; 
                         padding: 0;
                     }
-                    .vehicle-marker {
-                        width: 10px;
-                        height: 6px;
-                        border-radius: 2px;
-                        transform-origin: center;
-                    }
-                    .vehicle-marker.car { background-color: #3498db; }
-                    .vehicle-marker.truck { background-color: #e74c3c; width: 12px; }
-                    .vehicle-marker.bus { background-color: #f1c40f; width: 12px; }
-                    .vehicle-marker.motorcycle { background-color: #2ecc71; width: 8px; }
-                    
-                    .vehicle-marker.lights-on:before,
-                    .vehicle-marker.lights-on:after {
-                        content: '';
-                        position: absolute;
-                        width: 2px;
-                        height: 2px;
-                        background-color: yellow;
-                        border-radius: 50%;
-                        box-shadow: 0 0 3px 1px rgba(255, 255, 0, 0.7);
-                    }
-                    
-                    .vehicle-marker.lights-on:before {
-                        top: 0;
-                        left: 0;
-                    }
-                    
-                    .vehicle-marker.lights-on:after {
-                        top: 0;
-                        right: 0;
-                    }
-                    
-                    .traffic-light {
-                        width: 6px;
-                        height: 12px;
-                        background-color: #333;
-                        border-radius: 1px;
-                        position: relative;
-                    }
-                    
-                    .traffic-light:before {
-                        content: '';
-                        position: absolute;
-                        width: 4px;
-                        height: 4px;
-                        border-radius: 50%;
-                        top: 1px;
-                        left: 1px;
-                    }
-                    
-                    .traffic-light.red:before { 
-                        background-color: red; 
-                        box-shadow: 0 0 3px 1px rgba(255, 0, 0, 0.7);
-                    }
-                    
-                    .traffic-light.yellow:before { 
-                        background-color: yellow; 
-                        box-shadow: 0 0 3px 1px rgba(255, 255, 0, 0.7);
-                    }
-                    
-                    .traffic-light.green:before { 
-                        background-color: #2ecc71; 
-                        box-shadow: 0 0 3px 1px rgba(46, 204, 113, 0.7);
-                    }
+                    /* ... (tus estilos CSS existentes para vehículos y semáforos) ... */
                 </style>
             </head>
             <body>
                 <div id='map'></div>
                 <script>
-                    // Almacenar objetos
+                    var map; // Hacer map accesible globalmente en este script
+                    var currentLocationMarker; // Para el marcador de ubicación actual
                     var vehicleMarkers = {};
                     var trafficLightMarkers = {};
                     var roadPolylines = {};
-                    
-                    // Función añadida para crear vehículo con rotación correcta
+                    var tempMarkers = []; // Para marcadores temporales de ruta
+                    var currentRoutePolyline = null; // Para la polilínea de la ruta
+
                     function addVehicle(id, lat, lng, type, angle, lightsOn) {
-                        var vehicleClass = 'vehicle-marker ' + type.toLowerCase();
-                        if (lightsOn) vehicleClass += ' lights-on';
-                        
-                        var vehicleIcon = L.divIcon({
-                            html: '<div class="' + vehicleClass + '" style="transform: rotate(' + angle + 'deg);"></div>',
-                            className: 'vehicle-icon-container',
-                            iconSize: [12, 8]
-                        });
-                        
-                        var marker = L.marker([lat, lng], {
-                            icon: vehicleIcon,
-                            rotationAngle: angle
-                        }).addTo(map);
-                        
-                        vehicleMarkers[id] = marker;
-                        return marker;
+                        // ... (tu función addVehicle existente) ...
                     }
                     
                     function addTrafficLight(id, lat, lng, state) {
-                        var lightClass = 'traffic-light ' + state.toLowerCase();
-                        
-                        var lightIcon = L.divIcon({
-                            html: '<div class="' + lightClass + '"></div>',
-                            className: 'traffic-light-container',
-                            iconSize: [8, 14]
-                        });
-                        
-                        var marker = L.marker([lat, lng], {
-                            icon: lightIcon
-                        }).addTo(map);
-                        
-                        trafficLightMarkers[id] = marker;
-                        return marker;
+                        // ... (tu función addTrafficLight existente) ...
                     }
+
+                    // Funciones JS que se definirán/usarán en onPageFinished
+                    // function addPOI(id, lat, lng, name, category) { ... }
+                    // function addExplorationZone(id, lat, lng, radius, name, isExplored) { ... }
+                    // function addTempMarker(lat, lng, text) { ... }
+                    // function clearTempMarkers() { ... }
+                    // function drawRoute(latLngs) { ... }
+                    // function clearRoute() { ... }
                 </script>
             </body>
             </html>
         """.trimIndent()
     }
 
-    // Añadir estas propiedades
-    private lateinit var trafficSimulator: TrafficSimulator
-    private var isDayMode = true
+    // Data class para coordenadas, local a MapActivity
+    data class LatLng(val latitude: Double, val longitude: Double)
+
+    // Propiedades para la generación de rutas
+    private lateinit var routeButton: FloatingActionButton
+    private var isSelectingRoutePoints = false
+    private var routeStartPoint: LatLng? = null
+    private var routeEndPoint: LatLng? = null
+
+    // Propiedades existentes
     private var isTrafficSimulationEnabled = false
-    private val vehicleMarkers = mutableMapOf<Int, String>() // ID del vehículo -> ID del marcador JS
+    private val vehicleMarkers = mutableMapOf<Int, String>()
     private val trafficLightMarkers = mutableMapOf<Int, String>()
     private val roadPolylines = mutableMapOf<Int, String>()
 
@@ -197,17 +129,11 @@ class MapActivity : AppCompatActivity(), TrafficCallback {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
-            val data = result.data
-            data?.let {
+            result.data?.let {
                 val latitude = it.getDoubleExtra("zoneLat", 0.0)
                 val longitude = it.getDoubleExtra("zoneLng", 0.0)
-
                 if (latitude != 0.0 && longitude != 0.0) {
-                    // Centrar el mapa en la zona seleccionada
-                    val script = """
-                    map.setView([$latitude, $longitude], 16);
-                """.trimIndent()
-                    webView.evaluateJavascript(script, null)
+                    webView.evaluateJavascript("map.setView([$latitude, $longitude], 16);", null)
                 }
             }
         }
@@ -218,26 +144,18 @@ class MapActivity : AppCompatActivity(), TrafficCallback {
     ) { success ->
         if (success) {
             try {
-                // La foto se tomó correctamente, convertirla a ByteArray
                 currentPhotoUri?.let { photoURI ->
                     val inputStream = contentResolver.openInputStream(photoURI)
                     currentPhotoBytes = inputStream?.readBytes()
                     inputStream?.close()
-
-                    // Actualizar la vista previa
                     val dialogImageView = dialog.findViewById<ImageView>(R.id.poiPhotoImageView)
                     if (dialogImageView != null && currentPhotoBytes != null) {
-                        val bitmap = BitmapFactory.decodeByteArray(
-                            currentPhotoBytes, 0, currentPhotoBytes!!.size
-                        )
+                        val bitmap = BitmapFactory.decodeByteArray(currentPhotoBytes, 0, currentPhotoBytes!!.size)
                         dialogImageView.setImageBitmap(bitmap)
                     }
-
-                    // Eliminar el archivo temporal si es necesario
-                    val tempFile = File(photoURI.path ?: "")
-                    if (tempFile.exists()) {
-                        tempFile.delete()
-                    }
+                    // Considera no eliminar el archivo temporal aquí si currentPhotoPath lo usa para guardarlo en el POI
+                    // val tempFile = File(photoURI.path ?: "")
+                    // if (tempFile.exists()) { tempFile.delete() }
                 }
             } catch (e: Exception) {
                 Toast.makeText(this, "Error al procesar la imagen: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -246,7 +164,7 @@ class MapActivity : AppCompatActivity(), TrafficCallback {
     }
 
     private var currentPhotoUri: Uri? = null
-    private lateinit var dialog: BottomSheetDialog
+    private lateinit var dialog: BottomSheetDialog // Reutilizado para varios diálogos, podría ser mejor tener instancias separadas
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var webView: WebView
     private lateinit var progressBar: ProgressBar
@@ -258,15 +176,12 @@ class MapActivity : AppCompatActivity(), TrafficCallback {
     private val locationUpdateRunnable = object : Runnable {
         override fun run() {
             checkCurrentLocation()
-            // Repetir cada 30 segundos
             locationUpdateHandler.postDelayed(this, 30000)
         }
     }
     private var loadStartTime: Long = 0
     private var loadEndTime: Long = 0
-
     private lateinit var viewModel: LocationExplorerViewModel
-
     private var currentLatitude: Double = 0.0
     private var currentLongitude: Double = 0.0
     private var currentPhotoBytes: ByteArray? = null
@@ -281,50 +196,52 @@ class MapActivity : AppCompatActivity(), TrafficCallback {
         explorationTextView = findViewById(R.id.explorationTextView)
         addPoiButton = findViewById(R.id.addPoiButton)
         showPoiButton = findViewById(R.id.showPoiButton)
-        locationUpdateHandler = Handler(Looper.getMainLooper())
+        exploreZonesButton = findViewById(R.id.exploreZonesButton)
+        routeButton = findViewById(R.id.routeButton) // Inicializar el botón de ruta
 
+        locationUpdateHandler = Handler(Looper.getMainLooper())
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         viewModel = ViewModelProvider(this)[LocationExplorerViewModel::class.java]
 
-        // Configurar botón de zonas
-        exploreZonesButton = findViewById(R.id.exploreZonesButton)
         exploreZonesButton.setOnClickListener {
             val intent = Intent(this, ZonesActivity::class.java)
             zonesActivityLauncher.launch(intent)
         }
 
-        // Inicializar simulador de tráfico
-        trafficSimulator = TrafficSimulator(
-            TrafficSimulator.MapType.OPEN_STREET_MAP,
-            this
-        )
-
-
-            val trafficButton = findViewById<FloatingActionButton>(R.id.trafficSimulationButton)
-            trafficButton.setOnClickListener {
-                if (isTrafficSimulationEnabled) {
-                    clearTrafficSimulation()
-                    Toast.makeText(this, "Simulación de tráfico detenida", Toast.LENGTH_SHORT).show()
-                } else {
-                    startTrafficSimulation()
-                }
-            }
-
-            // Botón para cambiar entre día y noche
-            val dayNightButton = findViewById<FloatingActionButton>(R.id.dayNightButton)
-            dayNightButton.setOnClickListener {
-                toggleDayNightMode()
-            }
-
         setupObservers()
-        setupButtons()
+        setupButtons() // Configura addPoiButton y showPoiButton
+        setupRoutingButton() // Configura el nuevo botón de ruta
         requestLocationPermissions()
     }
 
     override fun onResume() {
         super.onResume()
-        // Iniciar actualizaciones de ubicación
         locationUpdateHandler.post(locationUpdateRunnable)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        locationUpdateHandler.removeCallbacks(locationUpdateRunnable)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        val timeDifference = loadEndTime - loadStartTime
+        if (loadStartTime > 0 && loadEndTime > 0 && timeDifference > 0) { // Solo guardar si hay tiempos válidos
+            val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
+            Log.d("OpenStreetMap", "Saving metrics - Load time: $timeDifference ms, Memory: $memoryUsage bytes")
+            val sharedPreferences = getSharedPreferences("MapMetrics", MODE_PRIVATE)
+            sharedPreferences.edit()
+                .putLong("osmLoadTime", timeDifference)
+                .putLong("osmMemoryUsage", memoryUsage)
+                .apply()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        clearRouteOnMap()
+        clearTempMarkers()
     }
 
     private fun setupObservers() {
@@ -332,11 +249,12 @@ class MapActivity : AppCompatActivity(), TrafficCallback {
             progressBar.progress = (progress * 100).toInt()
             explorationTextView.text = "${(progress * 100).toInt()}% explorado"
         }
-
-        viewModel.nearbyPlaces.observe(this) { places ->
-            updateMapWithPOIs(places)
+        // viewModel.nearbyPlaces.observe... // Asegúrate de que esto es lo que quieres
+        // En tu código original, nearbyPlaces y allPOIs actualizan con updateMapWithPOIs.
+        // Esto podría llevar a duplicados si no se maneja bien en el JS o al limpiar el mapa.
+        viewModel.allPOIs.observe(this) { pois -> // Observa allPOIs para actualizar el mapa
+            updateMapWithPOIs(pois)
         }
-
         viewModel.suggestedZones.observe(this) { zones ->
             if (zones.isNotEmpty()) {
                 showSuggestedZonesDialog(zones)
@@ -344,19 +262,25 @@ class MapActivity : AppCompatActivity(), TrafficCallback {
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        // Detener actualizaciones de ubicación
-        locationUpdateHandler.removeCallbacks(locationUpdateRunnable)
-    }
-
     private fun setupButtons() {
         addPoiButton.setOnClickListener {
+            isSelectingRoutePoints = false // Asegurarse de salir del modo ruta
             showAddPoiDialog()
         }
-
         showPoiButton.setOnClickListener {
+            isSelectingRoutePoints = false // Asegurarse de salir del modo ruta
             showPointsOfInterestDialog()
+        }
+    }
+
+    private fun setupRoutingButton() {
+        routeButton.setOnClickListener {
+            isSelectingRoutePoints = true
+            routeStartPoint = null
+            routeEndPoint = null
+            clearTempMarkers() // Limpiar marcadores de selección anteriores
+            clearRouteOnMap()  // Limpiar ruta dibujada anteriormente
+            Toast.makeText(this, "Toca el mapa para seleccionar el punto de inicio...", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -364,46 +288,35 @@ class MapActivity : AppCompatActivity(), TrafficCallback {
         val requestPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
-            val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
-            val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
-
-            if (fineLocationGranted || coarseLocationGranted) {
+            if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true) {
                 loadUserLocation()
             } else {
                 Toast.makeText(this, "Permisos de ubicación requeridos", Toast.LENGTH_SHORT).show()
             }
         }
-
-        requestPermissionLauncher.launch(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        )
+        requestPermissionLauncher.launch(arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ))
     }
 
     private fun loadUserLocation() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return
         }
-
         fusedLocationProviderClient.lastLocation.addOnSuccessListener { location ->
             if (location != null) {
                 currentLatitude = location.latitude
                 currentLongitude = location.longitude
-
                 loadMap(currentLatitude, currentLongitude)
-
-                // Registrar visita y buscar lugares cercanos
                 viewModel.recordVisit(currentLatitude, currentLongitude)
-                viewModel.fetchNearbyPlaces(currentLatitude, currentLongitude)
+                // viewModel.fetchNearbyPlaces(currentLatitude, currentLongitude) // Considera si esto es necesario aquí o en otro lugar
+            } else {
+                Toast.makeText(this, "No se pudo obtener la ubicación actual. Usando ubicación por defecto.", Toast.LENGTH_LONG).show()
+                // Cargar mapa con una ubicación por defecto si es necesario
+                loadMap(0.0, 0.0) // O una ubicación predeterminada más útil
             }
         }.addOnFailureListener {
             Toast.makeText(this, "Error al obtener ubicación", Toast.LENGTH_SHORT).show()
@@ -411,141 +324,135 @@ class MapActivity : AppCompatActivity(), TrafficCallback {
     }
 
     private fun loadMap(latitude: Double, longitude: Double) {
-        // JavaScript interface para interactuar con el mapa
-        class WebAppInterface {
-            @JavascriptInterface
-            fun onMapLongClick(lat: Double, lng: Double) {
-                runOnUiThread {
-                    showAddPoiDialog(lat, lng)
-                }
-            }
-        }
-
         webView.addJavascriptInterface(WebAppInterface(), "Android")
-
-        // Configuración del mapa existente...
         webView.settings.javaScriptEnabled = true
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
                 loadStartTime = SystemClock.elapsedRealtime()
-                Log.d("OpenStreetMap", "Start loading at: $loadStartTime")
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 loadEndTime = SystemClock.elapsedRealtime()
-                Log.d("OpenStreetMap", "Load time: ${loadEndTime - loadStartTime} ms")
+                Log.d("OpenStreetMap", "Map loaded. Load time: ${loadEndTime - loadStartTime} ms")
 
-                // Inicializar el mapa con coordenadas
                 val initScript = """
-                    var map = L.map('map').setView([$latitude, $longitude], 15);
+                    // Acceder a 'map' y 'currentLocationMarker' definidos globalmente en el script del HTML
+                    map = L.map('map').setView([$latitude, $longitude], 15);
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        maxZoom: 19
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     }).addTo(map);
                     
-                    // Marcador de ubicación actual
-                    var currentLocationMarker = L.marker([$latitude, $longitude]).addTo(map)
-                        .bindPopup('Mi ubicación')
-                        .openPopup();
+                    currentLocationMarker = L.marker([$latitude, $longitude]).addTo(map)
+                        .bindPopup('Mi ubicación');
+                    if ($latitude !== 0.0 || $longitude !== 0.0) { // Solo abrir popup si la ubicación es válida
+                         currentLocationMarker.openPopup();
+                    }
                     
-                    // Detectar click largo (longpress) en el mapa
                     var clickTimer;
                     map.on('mousedown', function(e) {
                         clickTimer = setTimeout(function() {
                             Android.onMapLongClick(e.latlng.lat, e.latlng.lng);
                         }, 500);
                     });
-                    
-                    map.on('mouseup', function() {
-                        clearTimeout(clickTimer);
-                    });
-                    
-                    // Función para añadir marcadores POI
+                    map.on('mouseup', function() { clearTimeout(clickTimer); });
+                    map.on('dragstart', function() { clearTimeout(clickTimer); });
+                    map.on('click', function(e) { Android.onMapClick(e.latlng.lat, e.latlng.lng); });
+
                     function addPOI(id, lat, lng, name, category) {
-                        var marker = L.marker([lat, lng]).addTo(map)
-                            .bindPopup('<b>' + name + '</b><br>' + category);
-                        return marker;
+                        L.marker([lat, lng]).addTo(map).bindPopup('<b>' + name + '</b><br>' + category);
                     }
-                    
-                    // Función para añadir zonas explorables
                     function addExplorationZone(id, lat, lng, radius, name, isExplored) {
                         var color = isExplored ? 'green' : 'red';
-                        var circle = L.circle([lat, lng], {
-                            color: color,
-                            fillColor: color,
-                            fillOpacity: 0.2,
-                            radius: radius
-                        }).addTo(map);
-                        
-                        circle.bindPopup('<b>' + name + '</b><br>' + 
-                            (isExplored ? 'Explorado' : 'Por explorar'));
-                        return circle;
+                        L.circle([lat, lng], { color: color, fillColor: color, fillOpacity: 0.2, radius: radius })
+                            .addTo(map).bindPopup('<b>' + name + '</b><br>' + (isExplored ? 'Explorado' : 'Por explorar'));
+                    }
+                    function addTempMarker(lat, lng, text) {
+                         var marker = L.marker([lat, lng], {
+                              icon: L.divIcon({
+                                  className: 'temp-marker', // Puedes estilizar esto en CSS si quieres
+                                  html: '<div style="background-color: blue; color: white; padding: 2px 5px; border-radius: 3px; font-size: 10px;">' + text + '</div>',
+                                  iconSize: null // Auto-size
+                              })
+                         }).addTo(map);
+                         tempMarkers.push(marker);
+                    }
+                    function clearTempMarkers() {
+                        tempMarkers.forEach(function(m) { map.removeLayer(m); });
+                        tempMarkers = [];
+                    }
+                    function drawRoute(latLngsJsonString) {
+                        if (currentRoutePolyline) { map.removeLayer(currentRoutePolyline); }
+                        var latLngsArray = JSON.parse(latLngsJsonString); // Parsear el string JSON
+                        currentRoutePolyline = L.polyline(latLngsArray, {color: 'blue', weight: 5}).addTo(map);
+                        if (latLngsArray.length > 0) map.fitBounds(currentRoutePolyline.getBounds());
+                    }
+                    function clearRoute() {
+                        if (currentRoutePolyline) { map.removeLayer(currentRoutePolyline); currentRoutePolyline = null; }
                     }
                 """.trimIndent()
-
                 webView.evaluateJavascript(initScript, null)
-
-                // Inicializar el mapa con los POIs y zonas guardados
                 loadSavedPOIs()
                 loadExplorationZones()
             }
         }
-
-        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
+        webView.loadDataWithBaseURL("https://openstreetmap.org", htmlContent, "text/html", "UTF-8", null)
     }
 
     private fun loadSavedPOIs() {
         viewModel.allPOIs.observe(this) { pois ->
+            // Considerar limpiar marcadores de POI anteriores antes de añadir nuevos para evitar duplicados
+            // o tener una lógica en JS para actualizar/eliminar marcadores existentes.
             updateMapWithPOIs(pois)
         }
     }
 
     private fun loadExplorationZones() {
         viewModel.allZones.observe(this) { zones ->
+            // Similar a POIs, considerar cómo se actualizan las zonas en el mapa
             updateMapWithZones(zones)
         }
     }
 
     private fun updateMapWithPOIs(pois: List<PointOfInterest>) {
-        for (poi in pois) {
-            val script = """
-                addPOI(${poi.id}, ${poi.latitude}, ${poi.longitude}, "${poi.name}", "${poi.category}");
-            """.trimIndent()
+        // Idealmente, antes de añadir, deberías limpiar los POIs antiguos del mapa
+        // o usar IDs para actualizar/evitar duplicados.
+        // Por simplicidad, aquí solo los añade.
+        pois.forEach { poi ->
+            val script = """addPOI(${poi.id}, ${poi.latitude}, ${poi.longitude}, "${poi.name.replace("\"", "\\\"")}", "${poi.category.replace("\"", "\\\"")}");"""
             webView.evaluateJavascript(script, null)
         }
     }
 
     private fun updateMapWithZones(zones: List<ExploredZone>) {
-        for (zone in zones) {
-            val script = """
-                addExplorationZone(${zone.id}, ${zone.centerLatitude}, ${zone.centerLongitude}, 
-                    ${zone.radius}, "${zone.name}", ${zone.isExplored});
-            """.trimIndent()
+        zones.forEach { zone ->
+            val script = """addExplorationZone(${zone.id}, ${zone.centerLatitude}, ${zone.centerLongitude}, ${zone.radius}, "${zone.name.replace("\"", "\\\"")}", ${zone.isExplored});"""
             webView.evaluateJavascript(script, null)
         }
     }
 
+    // --- Métodos para POIs y Diálogos (sin cambios mayores, solo asegurando que 'dialog' se maneja bien) ---
     private fun showAddPoiDialog(latitude: Double? = null, longitude: Double? = null) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_add_poi, null)
-        dialog = BottomSheetDialog(this)
-        dialog.setContentView(dialogView)
+        // Crear una nueva instancia de BottomSheetDialog para evitar conflictos si 'dialog' se usa en otro lado
+        val poiDialog = BottomSheetDialog(this)
+        poiDialog.setContentView(dialogView)
+        this.dialog = poiDialog // Asignar a la propiedad de clase si es necesario para takePictureLauncher
 
         val nameEditText = dialogView.findViewById<EditText>(R.id.poiNameEditText)
         val descriptionEditText = dialogView.findViewById<EditText>(R.id.poiDescriptionEditText)
         val categorySpinner = dialogView.findViewById<Spinner>(R.id.poiCategorySpinner)
-        val photoImageView = dialogView.findViewById<ImageView>(R.id.poiPhotoImageView)
+        // val photoImageView = dialogView.findViewById<ImageView>(R.id.poiPhotoImageView) // Ya se accede en takePictureLauncher
         val takePictureButton = dialogView.findViewById<Button>(R.id.takePictureButton)
         val saveButton = dialogView.findViewById<Button>(R.id.savePOIButton)
 
-        // Configurar el adaptador para el spinner de categorías
         val categories = arrayOf("Restaurante", "Monumento", "Parque", "Museo", "Tienda", "Otro")
-        val categoryAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories)
-        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        categorySpinner.adapter = categoryAdapter
+        categorySpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories)
+            .apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
 
         takePictureButton.setOnClickListener {
-            // Verificar permisos de cámara
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA_PERMISSION)
             } else {
@@ -556,56 +463,32 @@ class MapActivity : AppCompatActivity(), TrafficCallback {
         saveButton.setOnClickListener {
             val name = nameEditText.text.toString()
             val description = descriptionEditText.text.toString()
-
-            // Verificar que el spinner tiene un item seleccionado
-            val category = if (categorySpinner.selectedItem != null) {
-                categorySpinner.selectedItem.toString()
-            } else {
-                "Otro" // Valor por defecto
-            }
+            val category = categorySpinner.selectedItem?.toString() ?: "Otro"
 
             if (name.isNotEmpty()) {
-                val poi = PointOfInterest(
-                    name = name,
-                    description = description,
-                    latitude = latitude ?: currentLatitude,
-                    longitude = longitude ?: currentLongitude,
-                    category = category,
-                    // Solo incluir photoPath si no es nulo
-                    photoPath = currentPhotoPath
-                )
-                viewModel.insertPOI(poi)
-                dialog.dismiss()
+                viewModel.insertPOI(PointOfInterest(
+                    name = name, description = description,
+                    latitude = latitude ?: currentLatitude, longitude = longitude ?: currentLongitude,
+                    category = category, photoPath = currentPhotoPath
+                ))
+                poiDialog.dismiss()
                 Toast.makeText(this, "Punto de interés guardado", Toast.LENGTH_SHORT).show()
-
-                // Limpiar los datos de la foto después de guardar
-                currentPhotoPath = null
-                currentPhotoUri = null
-                currentPhotoBytes = null
+                currentPhotoPath = null; currentPhotoUri = null; currentPhotoBytes = null
             } else {
                 Toast.makeText(this, "El nombre es obligatorio", Toast.LENGTH_SHORT).show()
             }
         }
-
-        dialog.show()
+        poiDialog.show()
     }
 
     private fun createImageFile(): File {
-        // Crear un nombre de archivo único
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val imageFileName = "JPEG_" + timeStamp + "_"
+        val imageFileName = "JPEG_${timeStamp}_"
         val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-
-        return File.createTempFile(
-            imageFileName, /* prefijo */
-            ".jpg", /* sufijo */
-            storageDir /* directorio */
-        ).apply {
-            // Guardar la ruta para usar con el intent de la cámara
+        return File.createTempFile(imageFileName, ".jpg", storageDir).apply {
             currentPhotoPath = absolutePath
         }
     }
-
     private fun dispatchTakePictureIntent() {
         try {
             Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
@@ -615,617 +498,300 @@ class MapActivity : AppCompatActivity(), TrafficCallback {
                     val photoFile: File = createImageFile()
 
                     // Continuar solo si el archivo se ha creado correctamente
-                    photoFile.also {
-                        val photoURI: Uri = FileProvider.getUriForFile(
-                            this,
-                            "com.example.locationmaps.fileprovider",
-                            it
-                        )
-                        currentPhotoUri = photoURI
-                        takePictureLauncher.launch(photoURI)
-                    }
+                    // y asignar la URI a una variable local no nula para el launcher
+                    val photoURI: Uri = FileProvider.getUriForFile(
+                        this,
+                        "${applicationContext.packageName}.fileprovider", // Asegúrate que esta autoridad es correcta
+                        photoFile
+                    )
+                    currentPhotoUri = photoURI // Asigna a la propiedad de la clase para uso posterior
+
+                    // Usar la variable local 'photoURI' que es garantizada no nula aquí
+                    takePictureLauncher.launch(photoURI)
+
                 } ?: run {
                     Toast.makeText(this, "No se encontró una aplicación de cámara", Toast.LENGTH_SHORT).show()
                 }
             }
         } catch (ex: Exception) {
-            // Error occurred while creating the File
-            Log.e(TAG, "Error creando archivo de imagen: ${ex.message}", ex)
-            Toast.makeText(this, "Error creando archivo: ${ex.message}", Toast.LENGTH_SHORT).show()
+            // Error occurred while creating the File or getting URI
+            Log.e(TAG, "Error en dispatchTakePictureIntent: ${ex.message}", ex)
+            Toast.makeText(this, "Error al preparar la cámara: ${ex.message}", Toast.LENGTH_SHORT).show()
+            currentPhotoUri = null // Resetear si hubo un error
+            currentPhotoPath = null // También resetear el path
         }
     }
 
     private fun showPointsOfInterestDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_points_of_interest, null)
-        val dialog = BottomSheetDialog(this)
-        dialog.setContentView(dialogView)
+        val poiListDialog = BottomSheetDialog(this) // Nueva instancia
+        poiListDialog.setContentView(dialogView)
 
-        // Configura el RecyclerView
         val recyclerView = dialogView.findViewById<RecyclerView>(R.id.poiRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
+        val emptyTextView = dialogView.findViewById<TextView>(R.id.emptyPoisTextView)
 
-        // Crea e inicializa el adaptador
         val adapter = PointOfInterestAdapter(
-            pois = emptyList(),
+            emptyList(),
             onNavigateClicked = { poi ->
-                // Navegar al POI en el mapa
-                val script = """
-                map.setView([${poi.latitude}, ${poi.longitude}], 17);
-                L.marker([${poi.latitude}, ${poi.longitude}])
-                    .addTo(map)
-                    .bindPopup("${poi.name}")
-                    .openPopup();
-            """.trimIndent()
-                webView.evaluateJavascript(script, null)
-                dialog.dismiss()
+                webView.evaluateJavascript("map.setView([${poi.latitude}, ${poi.longitude}], 17); L.marker([${poi.latitude}, ${poi.longitude}]).addTo(map).bindPopup(\"${poi.name.replace("\"", "\\\"")}\").openPopup();", null)
+                poiListDialog.dismiss()
             },
             onDeleteClicked = { poi ->
-                // Eliminar el POI
                 viewModel.deletePOI(poi)
                 Toast.makeText(this, "Punto de interés eliminado", Toast.LENGTH_SHORT).show()
+                // El observer de allPOIs debería actualizar la lista
             }
         )
-
         recyclerView.adapter = adapter
 
-        // Observa los cambios en la lista de POIs
         viewModel.allPOIs.observe(this) { pois ->
+            adapter.updatePOIs(pois)
             if (pois.isEmpty()) {
-                dialogView.findViewById<TextView>(R.id.emptyPoisTextView).visibility = View.VISIBLE
+                emptyTextView.visibility = View.VISIBLE
                 recyclerView.visibility = View.GONE
             } else {
-                dialogView.findViewById<TextView>(R.id.emptyPoisTextView).visibility = View.GONE
+                emptyTextView.visibility = View.GONE
                 recyclerView.visibility = View.VISIBLE
-                adapter.updatePOIs(pois)
             }
         }
-
-        val closeButton = dialogView.findViewById<Button>(R.id.closeDialogButton)
-        closeButton.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        dialog.show()
+        dialogView.findViewById<Button>(R.id.closeDialogButton).setOnClickListener { poiListDialog.dismiss() }
+        poiListDialog.show()
     }
 
     private fun showSuggestedZonesDialog(zones: List<ExploredZone>) {
+        if (zones.isEmpty()) return
         val dialogView = layoutInflater.inflate(R.layout.dialog_suggested_zones, null)
-        val dialog = BottomSheetDialog(this)
-        dialog.setContentView(dialogView)
+        val suggestedZonesDialog = BottomSheetDialog(this) // Nueva instancia
+        suggestedZonesDialog.setContentView(dialogView)
 
-        // Aquí implementarías un RecyclerView con la lista de zonas sugeridas
-        // Para simplificar, solo mostraremos la primera zona sugerida
-
-        val zoneName = dialogView.findViewById<TextView>(R.id.suggestedZoneNameTextView)
-        val navigateButton = dialogView.findViewById<Button>(R.id.navigateToZoneButton)
-        val dismissButton = dialogView.findViewById<Button>(R.id.dismissSuggestionButton)
-
-        if (zones.isNotEmpty()) {
-            val firstZone = zones[0]
-            zoneName.text = firstZone.name
-
-            navigateButton.setOnClickListener {
-                // Centrar el mapa en la zona sugerida
-                val script = """
-                    map.setView([${firstZone.centerLatitude}, ${firstZone.centerLongitude}], 15);
-                """.trimIndent()
-                webView.evaluateJavascript(script, null)
-                dialog.dismiss()
-            }
+        val firstZone = zones[0]
+        dialogView.findViewById<TextView>(R.id.suggestedZoneNameTextView).text = firstZone.name
+        dialogView.findViewById<Button>(R.id.navigateToZoneButton).setOnClickListener {
+            webView.evaluateJavascript("map.setView([${firstZone.centerLatitude}, ${firstZone.centerLongitude}], 15);", null)
+            suggestedZonesDialog.dismiss()
         }
-
-        dismissButton.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        dialog.show()
+        dialogView.findViewById<Button>(R.id.dismissSuggestionButton).setOnClickListener { suggestedZonesDialog.dismiss() }
+        suggestedZonesDialog.show()
     }
 
-    // Guarda las métricas cuando el usuario sale de la actividad
-    override fun onStop() {
-        super.onStop()
-
-        val timeDifference = loadEndTime - loadStartTime
-        val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-
-        Log.d("OpenStreetMap", "Saving metrics - Load time: $timeDifference ms, Memory: $memoryUsage bytes")
-
-        // Guarda los datos en SharedPreferences
-        val sharedPreferences = getSharedPreferences("MapMetrics", MODE_PRIVATE)
-        val editor = sharedPreferences.edit()
-        editor.putLong("osmLoadTime", timeDifference)
-        editor.putLong("osmMemoryUsage", memoryUsage)
-        editor.apply()
-    }
-
-    // Modificar toggleTrafficSimulation para usar los datos cargados
-    private fun toggleTrafficSimulation() {
-        isTrafficSimulationEnabled = !isTrafficSimulationEnabled
-        if (isTrafficSimulationEnabled) {
-            // No necesitamos generar una red de carreteras, ya la tenemos de OSM
-            trafficSimulator.start()
-            Toast.makeText(this, "Simulación de tráfico iniciada", Toast.LENGTH_SHORT).show()
-        } else {
-            trafficSimulator.stop()
-            clearTrafficSimulation()
-            Toast.makeText(this, "Simulación de tráfico detenida", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // Implementar métodos del TrafficCallback
-    override fun onVehicleAdded(vehicle: Vehicle) {
-        // Corregido: Usar métodos de cadena seguros para JavaScript
-        val vehicleType = vehicle.type.name.toLowerCase(Locale.ROOT)
-        val lightsClass = if (!isDayMode) " lights-on" else ""
-
-        val script = """
-            var vehicleIcon = L.divIcon({
-                html: '<div class="vehicle-marker ${vehicleType}${lightsClass}"></div>',
-                className: 'vehicle-icon-container',
-                iconSize: [20, 10]
-            });
-            
-            var marker = L.marker([${vehicle.lat}, ${vehicle.lng}], {
-                icon: vehicleIcon,
-                rotationAngle: ${vehicle.angle}
-            }).addTo(map);
-            
-            // Guardar referencia
-            vehicleMarkers[${vehicle.id}] = marker;
-        """.trimIndent()
-
-        runOnUiThread {
-            webView.evaluateJavascript(script) { result ->
-                vehicleMarkers[vehicle.id] = "vehicleMarkers[${vehicle.id}]"
-            }
-        }
-    }
-
-    override fun onVehicleMoved(vehicle: Vehicle) {
-        vehicleMarkers[vehicle.id]?.let { markerId ->
-            val script = """
-                var marker = $markerId;
-                marker.setLatLng([${vehicle.lat}, ${vehicle.lng}]);
-                marker.setRotationAngle(${vehicle.angle});
-            """.trimIndent()
-
-            runOnUiThread {
-                webView.evaluateJavascript(script, null)
-            }
-        }
-    }
-
-    override fun onVehicleRemoved(vehicle: Vehicle) {
-        vehicleMarkers[vehicle.id]?.let { markerId ->
-            val script = """
-                var marker = $markerId;
-                map.removeLayer(marker);
-                delete vehicleMarkers[${vehicle.id}];
-            """.trimIndent()
-
-            runOnUiThread {
-                webView.evaluateJavascript(script, null)
-                vehicleMarkers.remove(vehicle.id)
-            }
-        }
-    }
-
-    override fun onTrafficLightAdded(trafficLight: TrafficLight) {
-        val colorClass = when (trafficLight.state) {
-            TrafficLightState.RED -> "red"
-            TrafficLightState.YELLOW -> "yellow"
-            TrafficLightState.GREEN -> "green"
-        }
-
-        val script = """
-            var trafficLightIcon = L.divIcon({
-                html: '<div class="traffic-light ${colorClass}"></div>',
-                className: 'traffic-light-container',
-                iconSize: [12, 30]
-            });
-            
-            var marker = L.marker([${trafficLight.lat}, ${trafficLight.lng}], {
-                icon: trafficLightIcon
-            }).addTo(map);
-            
-            // Guardar referencia
-            trafficLightMarkers[${trafficLight.id}] = marker;
-        """.trimIndent()
-
-        runOnUiThread {
-            webView.evaluateJavascript(script) { result ->
-                trafficLightMarkers[trafficLight.id] = "trafficLightMarkers[${trafficLight.id}]"
-            }
-        }
-    }
-
-    override fun onTrafficLightChanged(trafficLight: TrafficLight) {
-        trafficLightMarkers[trafficLight.id]?.let { markerId ->
-            val colorClass = when (trafficLight.state) {
-                TrafficLightState.RED -> "red"
-                TrafficLightState.YELLOW -> "yellow"
-                TrafficLightState.GREEN -> "green"
-            }
-
-            val script = """
-                var marker = $markerId;
-                var element = marker.getElement();
-                element.querySelector('.traffic-light').className = 'traffic-light ${colorClass}';
-            """.trimIndent()
-
-            runOnUiThread {
-                webView.evaluateJavascript(script, null)
-            }
-        }
-    }
-
-    // Este método es más simple y funciona mejor con la implementación actual
-    override fun onRoadNetworkLoaded(roadSegments: List<RoadSegment>) {
-        // En lugar de confiar en la conversión JSON compleja, simplemente dibuja cada segmento
-        for (segment in roadSegments) {
-            val color = getTrafficColorForDensity(segment.trafficDensity)
-
-            val script = """
-                var polyline = L.polyline([
-                    [${segment.startPoint.lat}, ${segment.startPoint.lng}],
-                    [${segment.endPoint.lat}, ${segment.endPoint.lng}]
-                ], {
-                    color: '${color}',
-                    weight: 5,
-                    opacity: 0.7
-                }).addTo(map);
-                
-                polyline.bindTooltip("${segment.name.replace("\"", "\\\"")}");
-                
-                // Guardar referencia
-                if (!window.roadPolylines) window.roadPolylines = {};
-                window.roadPolylines[${segment.id}] = polyline;
-            """.trimIndent()
-
-            runOnUiThread {
-                webView.evaluateJavascript(script, null)
-                roadPolylines[segment.id] = "window.roadPolylines[${segment.id}]"
-            }
-        }
-    }
-
-    override fun onRoadSegmentTrafficChanged(segment: RoadSegment) {
-        val script = """
-            var polyline = window.roadPolylines[${segment.id}];
-            if (polyline) {
-                polyline.setStyle({color: '${getTrafficColorForDensity(segment.trafficDensity)}'});
-            }
-        """.trimIndent()
-
-        runOnUiThread {
-            webView.evaluateJavascript(script, null)
-        }
-    }
-
-    override fun onDayNightModeChanged(isDayMode: Boolean) {
-        val script = if (isDayMode) {
-            """
-                // Actualizar vehículos (quitar luces)
-                if (window.vehicleMarkers) {
-                    Object.values(window.vehicleMarkers).forEach(function(marker) {
-                        var element = marker.getElement();
-                        if (element) {
-                            var vehicleDiv = element.querySelector('.vehicle-marker');
-                            if (vehicleDiv) vehicleDiv.classList.remove('lights-on');
-                        }
-                    });
-                }
-            """.trimIndent()
-        } else {
-            """
-                // Actualizar vehículos (añadir luces)
-                if (window.vehicleMarkers) {
-                    Object.values(window.vehicleMarkers).forEach(function(marker) {
-                        var element = marker.getElement();
-                        if (element) {
-                            var vehicleDiv = element.querySelector('.vehicle-marker');
-                            if (vehicleDiv) vehicleDiv.classList.add('lights-on');
-                        }
-                    });
-                }
-            """.trimIndent()
-        }
-
-        runOnUiThread {
-            webView.evaluateJavascript(script, null)
-        }
-    }
-
-    private fun startTrafficSimulation() {
-        // Asegúrate de que tengamos una ubicación
-        if (currentLatitude == 0.0 && currentLongitude == 0.0) {
-            Toast.makeText(this, "Esperando ubicación...", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Mostrar mensaje al usuario
-        Toast.makeText(this, "Iniciando simulación de tráfico...", Toast.LENGTH_SHORT).show()
-
-        // Primero, limpiar cualquier simulación previa
-        clearTrafficSimulation()
-
-        // Usar un script muy básico y directo
-        val script = """
-        // Asegurar que estamos trabajando con el mapa ya cargado
-        if (typeof map === "undefined") {
-            alert("El mapa no está inicializado");
-            return;
-        }
-        
-        // Crear un grupo para la simulación para facilitar la limpieza
-        window.trafficGroup = L.layerGroup().addTo(map);
-        
-        // Definir colores para tipos de calles
-        const COLORS = {
-            main: "#e74c3c",    // Rojo
-            secondary: "#3498db", // Azul
-            local: "#2ecc71"    // Verde
-        };
-        
-        // Crear una cuadrícula simple centrada en la ubicación actual
-        const centerLat = ${currentLatitude};
-        const centerLng = ${currentLongitude};
-        
-        // Crear calles principales (horizontales y verticales)
-        for (let i = -2; i <= 2; i++) {
-            // Calle horizontal
-            L.polyline([
-                [centerLat + i * 0.001, centerLng - 0.005],
-                [centerLat + i * 0.001, centerLng + 0.005]
-            ], {
-                color: i === 0 ? COLORS.main : COLORS.secondary,
-                weight: i === 0 ? 8 : 6,
-                opacity: 0.8
-            }).addTo(window.trafficGroup);
-            
-            // Calle vertical
-            L.polyline([
-                [centerLat - 0.005, centerLng + i * 0.001],
-                [centerLat + 0.005, centerLng + i * 0.001]
-            ], {
-                color: i === 0 ? COLORS.main : COLORS.secondary,
-                weight: i === 0 ? 8 : 6,
-                opacity: 0.8
-            }).addTo(window.trafficGroup);
-        }
-        
-        // Crear algunas calles locales
-        for (let i = -4; i <= 4; i += 2) {
-            if (i === 0) continue; // Saltar las calles principales
-            
-            // Calles horizontales secundarias
-            L.polyline([
-                [centerLat + i * 0.0005, centerLng - 0.003],
-                [centerLat + i * 0.0005, centerLng + 0.003]
-            ], {
-                color: COLORS.local,
-                weight: 4,
-                opacity: 0.7
-            }).addTo(window.trafficGroup);
-            
-            // Calles verticales secundarias
-            L.polyline([
-                [centerLat - 0.003, centerLng + i * 0.0005],
-                [centerLat + 0.003, centerLng + i * 0.0005]
-            ], {
-                color: COLORS.local,
-                weight: 4,
-                opacity: 0.7
-            }).addTo(window.trafficGroup);
-        }
-        
-        // Crear marcadores para vehículos
-        window.vehicles = [];
-        
-        // Función para crear un icono de vehículo
-        function createVehicleIcon(color) {
-            return L.divIcon({
-                html: '<div style="width:12px;height:8px;background-color:' + color + ';border-radius:2px;transform:rotate(' + (Math.random() * 360) + 'deg);"></div>',
-                className: 'vehicle-icon',
-                iconSize: [12, 8]
-            });
-        }
-        
-        // Añadir vehículos en las calles
-        for (let i = 0; i < 20; i++) {
-            // Posición aleatoria cerca del centro
-            const lat = centerLat + (Math.random() * 0.006 - 0.003);
-            const lng = centerLng + (Math.random() * 0.006 - 0.003);
-            
-            // Color aleatorio para el vehículo
-            const colors = ['#3498db', '#e74c3c', '#f1c40f', '#2ecc71'];
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            
-            // Crear marcador
-            const vehicle = L.marker([lat, lng], {
-                icon: createVehicleIcon(color)
-            }).addTo(window.trafficGroup);
-            
-            window.vehicles.push(vehicle);
-        }
-        
-        // Crear semáforos en las intersecciones principales
-        for (let i = -1; i <= 1; i++) {
-            for (let j = -1; j <= 1; j++) {
-                if (i === 0 && j === 0) continue; // Saltar el centro
-                
-                const lat = centerLat + i * 0.001;
-                const lng = centerLng + j * 0.001;
-                
-                // Crear icono de semáforo
-                const lightIcon = L.divIcon({
-                    html: '<div style="width:8px;height:8px;background-color:red;border-radius:50%;box-shadow:0 0 5px red;"></div>',
-                    className: 'traffic-light',
-                    iconSize: [8, 8]
-                });
-                
-                L.marker([lat, lng], {
-                    icon: lightIcon
-                }).addTo(window.trafficGroup);
-            }
-        }
-        
-        // Un semáforo especial en el centro
-        const centralLightIcon = L.divIcon({
-            html: '<div style="width:10px;height:10px;background-color:green;border-radius:50%;box-shadow:0 0 8px green;"></div>',
-            className: 'traffic-light-central',
-            iconSize: [10, 10]
-        });
-        
-        L.marker([centerLat, centerLng], {
-            icon: centralLightIcon
-        }).addTo(window.trafficGroup);
-        
-        // Informar del éxito
-        console.log("Simulación de tráfico creada con éxito");
-    """.trimIndent()
-
-        // Ejecutar el script y verificar el resultado
-        webView.evaluateJavascript(script) { result ->
-            Log.d("TrafficSimulation", "Resultado: $result")
-            isTrafficSimulationEnabled = true
-        }
-    }
-
-    private fun clearTrafficSimulation() {
-        if (isTrafficSimulationEnabled) {
-            // Script para eliminar todos los elementos de la simulación
-            val script = """
-            // Eliminar el grupo de capas si existe
-            if (window.trafficGroup) {
-                window.trafficGroup.clearLayers();
-                map.removeLayer(window.trafficGroup);
-                delete window.trafficGroup;
-                delete window.vehicles;
-                console.log("Simulación de tráfico eliminada");
-            }
-        """.trimIndent()
-
-            webView.evaluateJavascript(script, null)
-            isTrafficSimulationEnabled = false
-        }
-    }
-
- 
-    // También agregar el método para actualizar el modo día/noche
-    private fun toggleDayNightMode() {
-        isDayMode = !isDayMode
-
-        // Actualizar mapa y simulación
-        val script = """
-        // Actualizar capa base del mapa
-        const baseMapUrl = '${if (isDayMode)
-            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        else
-            "https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png"}';
-        
-        // Eliminar capas de mosaico existentes
-        map.eachLayer(function(layer) {
-            if (layer instanceof L.TileLayer) {
-                map.removeLayer(layer);
-            }
-        });
-        
-        // Añadir nueva capa base
-        L.tileLayer(baseMapUrl, {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-        
-        // Actualizar vehículos si la simulación está activa
-        if (window.trafficSimulation && window.trafficSimulation.running) {
-            for (const id in window.trafficSimulation.vehicles) {
-                try {
-                    const vehicle = window.trafficSimulation.vehicles[id];
-                    const lightsClass = ${!isDayMode} ? " lights-on" : "";
-                    const newIcon = L.divIcon({
-                        html: '<div class="vehicle ' + vehicle.type + lightsClass + '" style="transform: rotate(' + vehicle.angle + 'deg);"></div>',
-                        className: 'vehicle-container',
-                        iconSize: [20, 12],
-                        iconAnchor: [10, 6]
-                    });
-                    vehicle.marker.setIcon(newIcon);
-                } catch (e) {}
-            }
-        }
-    """.trimIndent()
-
+    // --- Funciones para enrutamiento ---
+    private fun addTempMarker(lat: Double, lng: Double, text: String) {
+        val script = """addTempMarker($lat, $lng, '$text');"""
         webView.evaluateJavascript(script, null)
-        Toast.makeText(this, if (isDayMode) "Modo día activado" else "Modo noche activado", Toast.LENGTH_SHORT).show()
     }
 
-    private fun getTrafficColorForDensity(density: Double): String {
-        return when {
-            density < 0.3 -> "#2ecc71" // Verde (tráfico fluido)
-            density < 0.7 -> "#f1c40f" // Amarillo (tráfico moderado)
-            else -> "#e74c3c"          // Rojo (tráfico congestionado)
+    private fun clearTempMarkers() {
+        webView.evaluateJavascript("clearTempMarkers();", null)
+    }
+
+    private fun showRoutingDialog() {
+        val start = routeStartPoint ?: return // Salir si no hay punto de inicio
+        val end = routeEndPoint ?: return // Salir si no hay punto final
+
+        val dialogView = layoutInflater.inflate(R.layout.dialog_routing_options, null)
+        val routingDialog = BottomSheetDialog(this) // Nueva instancia
+        routingDialog.setContentView(dialogView)
+
+        val startPointTextView = dialogView.findViewById<TextView>(R.id.startPointTextView)
+        val endPointTextView = dialogView.findViewById<TextView>(R.id.endPointTextView)
+        val transportModeSpinner = dialogView.findViewById<Spinner>(R.id.transportModeSpinner)
+        val calculateRouteButton = dialogView.findViewById<Button>(R.id.calculateRouteButton)
+        val routeResultTextView = dialogView.findViewById<TextView>(R.id.routeResultTextView)
+        val closeButton = dialogView.findViewById<Button>(R.id.closeRouteDialogButton)
+
+        startPointTextView.text = "Inicio: ${"%.4f".format(start.latitude)}, ${"%.4f".format(start.longitude)}"
+        endPointTextView.text = "Fin: ${"%.4f".format(end.latitude)}, ${"%.4f".format(end.longitude)}"
+
+        val transportModes = resources.getStringArray(R.array.transport_modes)
+        transportModeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, transportModes)
+            .apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+
+        calculateRouteButton.setOnClickListener {
+            val selectedMode = transportModeSpinner.selectedItem.toString()
+            val vehicle = when (selectedMode) {
+                "Coche" -> "car"; "Bicicleta" -> "bike"; "A pie" -> "foot"; else -> "car"
+            }
+            calculateAndDisplayRoute(start, end, vehicle, routeResultTextView)
+            clearTempMarkers() // Limpiar marcadores de selección después de calcular
+        }
+
+        closeButton.setOnClickListener {
+            routingDialog.dismiss()
+            clearTempMarkers() // Limpiar marcadores si se cierra el diálogo
+            clearRouteOnMap()  // Limpiar la ruta si estaba dibujada
+        }
+        routingDialog.setOnDismissListener {
+            // Asegurarse de limpiar si se cierra de otra forma (ej. swipe)
+            clearTempMarkers()
+            clearRouteOnMap()
+        }
+        routingDialog.show()
+    }
+
+    private fun calculateAndDisplayRoute(start: LatLng, end: LatLng, vehicle: String, resultTextView: TextView) {
+        clearRouteOnMap()
+        resultTextView.visibility = View.GONE
+        resultTextView.text = "Calculando..."
+        resultTextView.visibility = View.VISIBLE
+
+
+        // Reemplaza "YOUR_GRAPHHOPPER_API_KEY" o usa tu propio servidor
+        val apiKey = "test" // ¡USA TU PROPIA CLAVE! O una URL de servidor local
+        val baseUrl = "https://graphhopper.com/api/1/route"
+        // val baseUrl = "http://tu_servidor_graphhopper_local:8989/route"
+
+        val urlString = "$baseUrl?point=${start.latitude},${start.longitude}" +
+                "&point=${end.latitude},${end.longitude}" +
+                "&vehicle=$vehicle&locale=es&instructions=false&calc_points=true&points_encoded=false" +
+                "&key=$apiKey"
+        Log.d("Routing", "Request URL: $urlString")
+
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                val url = URL(urlString)
+                val connection = url.openConnection() as java.net.HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.connectTimeout = 15000
+                connection.readTimeout = 15000
+
+                if (connection.responseCode == java.net.HttpURLConnection.HTTP_OK) {
+                    val response = connection.inputStream.bufferedReader().use { it.readText() }
+                    val jsonResponse = JSONObject(response)
+                    if (jsonResponse.has("paths") && jsonResponse.getJSONArray("paths").length() > 0) {
+                        val firstPath = jsonResponse.getJSONArray("paths").getJSONObject(0)
+                        val distance = firstPath.getDouble("distance") / 1000 // km
+                        val time = firstPath.getLong("time") / 1000 / 60 // minutes
+                        val pointsArray = firstPath.getJSONObject("points").getJSONArray("coordinates")
+
+                        val polylineLatLngs = mutableListOf<List<Double>>() // Lista de [lat, lng]
+                        for (i in 0 until pointsArray.length()) {
+                            val point = pointsArray.getJSONArray(i)
+                            polylineLatLngs.add(listOf(point.getDouble(1), point.getDouble(0))) // API da [lng, lat], Leaflet necesita [lat, lng]
+                        }
+
+                        val resultText = "Distancia: %.2f km\nTiempo: %d min".format(distance, time)
+                        withContext(Dispatchers.Main) {
+                            resultTextView.text = resultText
+                            drawRouteOnMap(polylineLatLngs)
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            resultTextView.text = "Ruta no encontrada."
+                            Toast.makeText(this@MapActivity, jsonResponse.optString("message", "Ruta no encontrada"), Toast.LENGTH_LONG).show()
+                        }
+                    }
+                } else {
+                    val errorMsg = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "Error HTTP ${connection.responseCode}"
+                    Log.e("Routing", "HTTP Error: ${connection.responseCode} - $errorMsg")
+                    withContext(Dispatchers.Main) {
+                        resultTextView.text = "Error: $errorMsg"
+                        Toast.makeText(this@MapActivity, "Error ($errorMsg)", Toast.LENGTH_LONG).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("Routing", "Exception: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    resultTextView.text = "Error de red: ${e.localizedMessage}"
+                    Toast.makeText(this@MapActivity, "Error de red", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
-    // Asegúrate de detener la simulación cuando se destruya la actividad
-    override fun onDestroy() {
-        super.onDestroy()
-        trafficSimulator.stop()
+    private fun drawRouteOnMap(latLngs: List<List<Double>>) { // Acepta List<List<Double>>
+        // Convertir la lista de [lat, lng] a un string JSON para JavaScript
+        val latLngArrayJson = latLngs.joinToString(prefix = "[", postfix = "]") { "[${it[0]}, ${it[1]}]" }
+        val script = """drawRoute('$latLngArrayJson');""" // Pasar como string JSON
+        webView.evaluateJavascript(script, null)
+    }
+
+    private fun clearRouteOnMap() {
+        webView.evaluateJavascript("clearRoute();", null)
     }
 
     private fun checkCurrentLocation() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return
         }
-
         fusedLocationProviderClient.lastLocation.addOnSuccessListener { location ->
             location?.let {
-                currentLatitude = location.latitude
-                currentLongitude = location.longitude
-
-                // Registrar visita y actualizar zonas
+                currentLatitude = it.latitude
+                currentLongitude = it.longitude
                 viewModel.recordVisit(currentLatitude, currentLongitude)
-
-                // Actualizar marcador de posición actual en el mapa
                 val script = """
-                // Actualizar posición del marcador de ubicación actual
-                if (currentLocationMarker) {
-                    currentLocationMarker.setLatLng([$currentLatitude, $currentLongitude]);
-                }
-            """.trimIndent()
+                    if (currentLocationMarker) {
+                        currentLocationMarker.setLatLng([$currentLatitude, $currentLongitude]);
+                        // map.panTo([$currentLatitude, $currentLongitude]); // Opcional: centrar mapa
+                    }
+                """.trimIndent()
                 webView.evaluateJavascript(script, null)
             }
         }
     }
 
-    // Añadir el launcher para la actividad de detalle
+    // --- Clase interna WebAppInterface ---
+    inner class WebAppInterface {
+        @JavascriptInterface
+        fun onMapLongClick(lat: Double, lng: Double) {
+            this@MapActivity.runOnUiThread {
+                if (isSelectingRoutePoints) {
+                    val clickedLatLng = LatLng(lat, lng) // Usa la LatLng de MapActivity
+                    if (routeStartPoint == null) {
+                        routeStartPoint = clickedLatLng
+                        Toast.makeText(this@MapActivity, "Punto de inicio seleccionado. Toca el mapa para el punto final.", Toast.LENGTH_SHORT).show()
+                        addTempMarker(lat, lng, "Inicio")
+                    } else if (routeEndPoint == null) {
+                        routeEndPoint = clickedLatLng
+                        Toast.makeText(this@MapActivity, "Punto final seleccionado.", Toast.LENGTH_SHORT).show()
+                        addTempMarker(lat, lng, "Fin")
+                        showRoutingDialog()
+                        // isSelectingRoutePoints se volverá false si el usuario cierra el diálogo o calcula
+                    }
+                } else {
+                    showAddPoiDialog(lat, lng)
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun onMapClick(lat: Double, lng: Double) {
+            this@MapActivity.runOnUiThread {
+                if (isSelectingRoutePoints) {
+                    val clickedLatLng = LatLng(lat, lng)
+                    if (routeStartPoint == null) {
+                        routeStartPoint = clickedLatLng
+                        Toast.makeText(this@MapActivity, "Punto de inicio seleccionado. Toca el mapa para el punto final.", Toast.LENGTH_SHORT).show()
+                        addTempMarker(lat, lng, "Inicio")
+                    } else if (routeEndPoint == null) {
+                        routeEndPoint = clickedLatLng
+                        Toast.makeText(this@MapActivity, "Punto final seleccionado.", Toast.LENGTH_SHORT).show()
+                        addTempMarker(lat, lng, "Fin")
+                        showRoutingDialog()
+                    }
+                }
+                // Si no está en modo selección de ruta, el click simple no hace nada por ahora
+            }
+        }
+    }
+
+    // Launcher para detalle de POI (no modificado, pero asegúrate que funciona como esperas)
     private val poiDetailLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
-            result.data?.let { data ->
-                if (data.hasExtra("navigate_to_poi")) {
-                    val poiId = data.getLongExtra("navigate_to_poi", -1)
-                    if (poiId != -1L) {
-                        viewModel.getPoiById(poiId).observe(this) { poi ->
-                            poi?.let {
-                                val script = """
-                                map.setView([${poi.latitude}, ${poi.longitude}], 17);
-                                L.marker([${poi.latitude}, ${poi.longitude}])
-                                    .addTo(map)
-                                    .bindPopup("${poi.name}")
-                                    .openPopup();
-                            """.trimIndent()
-                                webView.evaluateJavascript(script, null)
-                            }
-                        }
+            result.data?.getLongExtra("navigate_to_poi", -1L)?.takeIf { it != -1L }?.let { poiId ->
+                viewModel.getPoiById(poiId).observe(this) { poi ->
+                    poi?.let {
+                        val script = """
+                            map.setView([${it.latitude}, ${it.longitude}], 17);
+                            L.marker([${it.latitude}, ${it.longitude}])
+                                .addTo(map)
+                                .bindPopup("${it.name.replace("\"", "\\\"")}")
+                                .openPopup();
+                        """.trimIndent()
+                        webView.evaluateJavascript(script, null)
                     }
                 }
             }

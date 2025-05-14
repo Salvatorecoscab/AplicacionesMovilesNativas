@@ -47,6 +47,7 @@ dependencies {
     // Room Database
     implementation("androidx.room:room-runtime:2.7.1")
     implementation("androidx.room:room-ktx:2.7.1")
+    implementation(libs.play.services.maps)
     kapt("androidx.room:room-compiler:2.7.1")  // Usa kapt en lugar de annotationProcessor
 
     // Retrofit para APIs de POIs
@@ -55,7 +56,8 @@ dependencies {
 
     // Coil para carga de imágenes
     implementation(libs.coil)
-
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3") // Usa la versión más reciente
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3") // Usa la versión más reciente
     // ViewModel y LiveData
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
