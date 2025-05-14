@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Esta línea permite compartir archivos desde getExternalFilesDir(Environment.DIRECTORY_PICTURES) -->
+    <external-files-path
+        name="my_pictures"
+        path="Pictures" />
+
+    <!-- Si también quisieras usar el directorio de caché para otras cosas, podrías añadir: -->
+    <!-- <external-cache-path name="my_cached_images" path="." /> -->
+</paths>

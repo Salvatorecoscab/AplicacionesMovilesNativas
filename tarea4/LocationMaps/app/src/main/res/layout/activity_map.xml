@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#99000000"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/explorationTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0% explorado"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp" />
+
+        <ProgressBar
+            android:id="@+id/explorationProgressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="0" />
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/addPoiButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:contentDescription="Añadir POI"
+        app:srcCompat="@android:drawable/ic_input_add" />
+    <!-- Añadir estos botones flotantes al layout existente -->
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/showPoiButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toStartOf="@id/addPoiButton"
+        android:layout_margin="16dp"
+        android:contentDescription="Ver POIs"
+        app:srcCompat="@android:drawable/ic_menu_myplaces" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/exploreZonesButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toStartOf="@id/showPoiButton"
+        android:layout_margin="16dp"
+        android:contentDescription="Zonas de exploración"
+        app:srcCompat="@android:drawable/ic_dialog_map" />
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/trafficSimulationButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toStartOf="@id/exploreZonesButton"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_traffic"
+        app:layout_constraintBottom_toTopOf="@+id/addPoiButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="Simulación de tráfico" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/dayNightButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_night_mode"
+        android:layout_alignParentBottom="true"
+        android:layout_toStartOf="@id/trafficSimulationButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="Cambiar modo día/noche" />
+
+</RelativeLayout>

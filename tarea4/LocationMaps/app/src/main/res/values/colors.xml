@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="exploredZoneBackground">#E0F7E0</color> <!-- Verde claro -->
+    <color name="unexploredZoneBackground">#FBE9E7</color>
+    <color name="trafficColorGreen">#2ecc71</color>
+    <color name="trafficColorYellow">#f1c40f</color>
+    <color name="trafficColorRed">#e74c3c</color>
+</resources>

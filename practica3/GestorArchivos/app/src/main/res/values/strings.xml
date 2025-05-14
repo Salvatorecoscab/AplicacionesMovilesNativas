@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">GestorArchivos</string>
+
+    <string name="image_preview">Vista previa de la imagen</string>
+    <string name="rotate_left">Rotar a la izquierda</string>
+    <string name="rotate_right">Rotar a la derecha</string>
+    <string name="back">Volver</string>
+
+    <string name="cannot_open_file_directly">No se puede abrir este tipo de archivo directamente en la aplicación.</string>
+    <string name="open_with">Abrir con...</string>
+    <string name="cancel">Cancelar</string>
+    <string name="file_options">Opciones de archivo</string>
+    <string name="change_theme">Cambiar Tema</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+</resources>

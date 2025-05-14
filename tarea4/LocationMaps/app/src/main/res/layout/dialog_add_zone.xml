@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/zoneNameEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nombre de la zona"
+        android:inputType="text"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/zoneLatitudeEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Latitud (ejemplo: 19.4326)"
+        android:inputType="numberDecimal|numberSigned"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/zoneLongitudeEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Longitud (ejemplo: -99.1332)"
+        android:inputType="numberDecimal|numberSigned"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/zoneRadiusEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Radio en metros (ejemplo: 300)"
+        android:inputType="numberDecimal"
+        android:layout_marginBottom="8dp" />
+</LinearLayout>
