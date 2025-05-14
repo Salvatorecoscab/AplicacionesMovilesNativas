@@ -18,6 +18,7 @@ class GoogleMapsActivity : AppCompatActivity() {
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var webView: WebView
 
+
     private var loadStartTime: Long = 0 // Tiempo de inicio de carga
     private var loadEndTime: Long = 0   // Tiempo de fin de carga
 

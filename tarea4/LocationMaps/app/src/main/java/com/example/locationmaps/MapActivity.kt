@@ -53,6 +53,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
 import java.net.URL
 // import java.net.URLEncoder // No se está usando URLEncoder directamente aquí
 
@@ -619,12 +622,12 @@ class MapActivity : AppCompatActivity() {
         closeButton.setOnClickListener {
             routingDialog.dismiss()
             clearTempMarkers() // Limpiar marcadores si se cierra el diálogo
-            clearRouteOnMap()  // Limpiar la ruta si estaba dibujada
+            //clearRouteOnMap()  // Limpiar la ruta si estaba dibujada
         }
         routingDialog.setOnDismissListener {
             // Asegurarse de limpiar si se cierra de otra forma (ej. swipe)
             clearTempMarkers()
-            clearRouteOnMap()
+            //clearRouteOnMap()
         }
         routingDialog.show()
     }
@@ -637,9 +640,11 @@ class MapActivity : AppCompatActivity() {
 
 
         // Reemplaza "YOUR_GRAPHHOPPER_API_KEY" o usa tu propio servidor
-        val apiKey = "test" // ¡USA TU PROPIA CLAVE! O una URL de servidor local
+        val apiKey = BuildConfig.API_KEY
+        //print ln(apiKey)
+
+
         val baseUrl = "https://graphhopper.com/api/1/route"
-        // val baseUrl = "http://tu_servidor_graphhopper_local:8989/route"
 
         val urlString = "$baseUrl?point=${start.latitude},${start.longitude}" +
                 "&point=${end.latitude},${end.longitude}" +
@@ -650,12 +655,12 @@ class MapActivity : AppCompatActivity() {
         GlobalScope.launch(Dispatchers.IO) {
             try {
                 val url = URL(urlString)
-                val connection = url.openConnection() as java.net.HttpURLConnection
+                val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "GET"
                 connection.connectTimeout = 15000
                 connection.readTimeout = 15000
 
-                if (connection.responseCode == java.net.HttpURLConnection.HTTP_OK) {
+                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
                     val response = connection.inputStream.bufferedReader().use { it.readText() }
                     val jsonResponse = JSONObject(response)
                     if (jsonResponse.has("paths") && jsonResponse.getJSONArray("paths").length() > 0) {
@@ -674,6 +679,7 @@ class MapActivity : AppCompatActivity() {
                         withContext(Dispatchers.Main) {
                             resultTextView.text = resultText
                             drawRouteOnMap(polylineLatLngs)
+
                         }
                     } else {
                         withContext(Dispatchers.Main) {
