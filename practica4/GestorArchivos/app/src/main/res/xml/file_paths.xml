@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Para archivos en el almacenamiento interno privado -->
+    <files-path name="internal_files" path="." />
+    <!-- Para archivos en el almacenamiento externo privado (todos los subdirectorios como Documents, Pictures, etc.) -->
+    <external-files-path name="external_app_files" path="." />
+    <!-- Para archivos en la caché externa privada -->
+    <external-cache-path name="external_app_cache" path="." />
+    <!-- Si también manejas archivos de la raíz del almacenamiento externo público (considera implicaciones) -->
+    <external-path name="external_public_root" path="." />
+</paths>

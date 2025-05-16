@@ -1,0 +1,19 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Tema IPN (oscuro) -->
+    <style name="Theme.IPN" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/ipn_primary</item>
+        <item name="colorPrimaryDark">@color/ipn_primary</item>
+        <item name="colorAccent">@color/ipn_primary</item>
+        <item name="android:textColor">@color/ipn_text_light</item>
+        <item name="android:windowBackground">@color/black</item>
+    </style>
+
+    <!-- Tema ESCOM (oscuro) -->
+    <style name="Theme.ESCOM" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/escom_primary</item>
+        <item name="colorPrimaryDark">@color/escom_primary</item>
+        <item name="colorAccent">@color/escom_primary</item>
+        <item name="android:textColor">@color/escom_text_light</item>
+        <item name="android:windowBackground">@color/black</item>
+    </style>
+</resources>
