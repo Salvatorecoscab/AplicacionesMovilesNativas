@@ -143,6 +143,45 @@
 
 
 
+## Capturas de Pantalla
+
+Aquí se incluirán capturas de pantalla que ilustren las funcionalidades clave de la aplicación.
+
+* **Pantalla de Inicio de Sesión/Registro:**
+  
+
+  [Image of Login/Register Screen]
+
+* **Pantalla de Registro de Administrador (con campo de contraseña maestra):**
+  
+
+  [Image of Admin Registration Screen]
+
+* **Perfil de Usuario Normal:**
+  
+
+  [Image of Normal User Profile Screen]
+
+* **Panel de Administrador (con lista de usuarios y opción de envío de notificaciones):**
+  
+
+  [Image of Admin Panel Screen]
+
+* **Composición de Notificación (Administrador):**
+  
+
+  [Image of Notification Composition Screen]
+
+* **Notificación Recibida en la Barra de Estado:**
+  
+
+  [Image of Notification in Status Bar]
+
+* **Historial de Notificaciones (Usuario Normal):**
+  
+
+  [Image of Notification History Screen]
+
 ## Contribución
 
 **Si deseas contribuir a este proyecto, por favor, sigue los siguientes pasos:**
